@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrobelnyKasprzak.MovieCatal
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrobelnyKasprzak.MovieCatalogue.DAOMock", "..\GrobelnyKasprzak.MovieCatalogue.DAOMock\GrobelnyKasprzak.MovieCatalogue.DAOMock.csproj", "{1C664924-9A70-44C8-90B1-D48B1D44DF26}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrobelnyKasprzak.MoviCatalogue.Core", "..\GrobelnyKasprzak.MoviCatalogue.Core\GrobelnyKasprzak.MoviCatalogue.Core.csproj", "{E11A7E8A-80A8-4ACA-B4F3-170291160385}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrobelnyKasprzak.MovieCatalogue.Core", "..\GrobelnyKasprzak.MovieCatalogue.Core\GrobelnyKasprzak.MovieCatalogue.Core.csproj", "{E11A7E8A-80A8-4ACA-B4F3-170291160385}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrobelnyKasprzak.MovieCatalogue.Wpf", "..\GrobelnyKasprzak.MovieCatalogue.Wpf\GrobelnyKasprzak.MovieCatalogue.Wpf.csproj", "{02E34F1D-2669-4766-8CA9-6AA3D2C00782}"
 EndProject

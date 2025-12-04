@@ -3,7 +3,7 @@ using GrobelnyKasprzak.MovieCatalogue.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GrobelnyKasprzak.MovieCatalogue.DAOSQL.Models
+namespace GrobelnyKasprzak.MovieCatalogue.DAOSql.Models
 {
     public class Movie : IMovie
     {
@@ -19,10 +19,10 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOSQL.Models
         [Range(1, int.MaxValue, ErrorMessage = "Please select a Studio")]
         public int StudioId { get; set; }
         [ForeignKey("StudioId")]
-        public required Studio Studio { get; set; }
+        public IStudio? Studio { get; set; }
         [Range(1, int.MaxValue, ErrorMessage = "Please select a Director")]
         public int DirectorId { get; set; }
         [ForeignKey("DirectorId")]
-        public required Director Director { get; set; }
+        public IDirector? Director { get; set; }
     }
 }

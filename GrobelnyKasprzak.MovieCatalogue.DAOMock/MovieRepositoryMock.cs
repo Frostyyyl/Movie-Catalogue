@@ -6,7 +6,7 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
 {
     public class MovieRepositoryMock : IMovieRepository
     {
-        private static List<Movie> _movies =
+        private static readonly List<Movie> _movies =
         [
             new Movie { Id = 1, Title = "Matrix", Year = 1999, StudioId = 1, Genre = MovieGenre.SciFi, DirectorId = 1 },
             new Movie { Id = 2, Title = "Shrek", Year = 2001, StudioId = 2, Genre = MovieGenre.Animation, DirectorId = 2 }

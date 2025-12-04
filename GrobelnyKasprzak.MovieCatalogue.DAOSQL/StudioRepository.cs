@@ -1,8 +1,8 @@
-﻿using GrobelnyKasprzak.MovieCatalogue.DAOSQL.Models;
+﻿using GrobelnyKasprzak.MovieCatalogue.DAOSql.Models;
 using GrobelnyKasprzak.MovieCatalogue.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace GrobelnyKasprzak.MovieCatalogue.DAOSQL
+namespace GrobelnyKasprzak.MovieCatalogue.DAOSql
 {
     public class StudioRepository : IStudioRepository
     {

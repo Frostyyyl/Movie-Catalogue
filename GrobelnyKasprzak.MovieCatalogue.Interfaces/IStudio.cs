@@ -4,5 +4,6 @@
     {
         int Id { get; set; }
         string Name { get; set; }
+        ICollection<IMovie> Movies { get; set; }
     }
 }

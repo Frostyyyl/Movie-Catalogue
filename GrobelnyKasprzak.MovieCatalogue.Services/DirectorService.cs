@@ -6,9 +6,10 @@ namespace GrobelnyKasprzak.MovieCatalogue.Services
     {
         private readonly IDirectorRepository _repo;
 
-        public DirectorService(IDirectorRepository repo)
+        public DirectorService()
         {
-            _repo = repo;
+            ReflectionLoader loader = new();
+            _repo = loader.GetRepository<IDirectorRepository>();
         }
 
         public IEnumerable<IDirector> GetAllDirectors() => _repo.GetAll();

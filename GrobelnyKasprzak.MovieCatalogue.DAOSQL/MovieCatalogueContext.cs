@@ -1,7 +1,8 @@
-﻿using GrobelnyKasprzak.MovieCatalogue.DAOSQL.Models;
+﻿using GrobelnyKasprzak.MovieCatalogue.DAOSql.Models;
+using GrobelnyKasprzak.MovieCatalogue.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace GrobelnyKasprzak.MovieCatalogue.DAOSQL
+namespace GrobelnyKasprzak.MovieCatalogue.DAOSql
 {
     public class MovieCatalogueContext : DbContext
     {
@@ -16,11 +17,11 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOSQL
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Movie>()
+            modelBuilder.Entity<IMovie>() // NOTE: This should(?) be Movie and not IMovie
                 .HasOne(m => m.Director)
                 .WithMany(d => d.Movies);
 
-            modelBuilder.Entity<Studio>()
+            modelBuilder.Entity<IStudio>() // NOTE: This should(?) be Studio and not IStudio
                 .HasMany(s => s.Movies)
                 .WithOne(m => m.Studio)
                 .HasForeignKey(m => m.StudioId);

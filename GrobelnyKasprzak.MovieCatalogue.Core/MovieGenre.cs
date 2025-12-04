@@ -1,5 +1,4 @@
-﻿
-namespace GrobelnyKasprzak.MovieCatalogue.Core
+﻿namespace GrobelnyKasprzak.MovieCatalogue.Core
 {
     public enum MovieGenre
     {

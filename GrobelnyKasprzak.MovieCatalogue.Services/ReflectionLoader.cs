@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Reflection;
 
-namespace GrobelnyKasprzak.MovieCatalogue.Core
+namespace GrobelnyKasprzak.MovieCatalogue.Services
 {
     public class ReflectionLoader
     {
@@ -34,7 +34,7 @@ namespace GrobelnyKasprzak.MovieCatalogue.Core
             }
         }
 
-        public T GetRepository<T>() where T : class
+        public T GetRepository<T>(params object[] args) where T : class
         {
             Type? typeToCreate = null;
 
@@ -52,9 +52,11 @@ namespace GrobelnyKasprzak.MovieCatalogue.Core
                 throw new Exception($"Nie znaleziono implementacji {typeof(T).Name} w bibliotece.");
             }
 
-            var instance = Activator.CreateInstance(typeToCreate);
+            var instance = Activator.CreateInstance(typeToCreate, args);
 
-            return instance == null ? throw new Exception($"Nie znaleziono implementacji {typeof(T).Name} w bibliotece.") : (T)instance;
+            return instance == null
+                ? throw new Exception($"Nie udało się utworzyć instancji {typeof(T).Name}.")
+                : (T)instance;
         }
     }
 }

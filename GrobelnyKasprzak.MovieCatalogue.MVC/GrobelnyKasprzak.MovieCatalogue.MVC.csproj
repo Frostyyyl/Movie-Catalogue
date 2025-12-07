@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="9.1.1" />
+    <PackageReference Include="AutoMapper" Version="16.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
   </ItemGroup>
 
@@ -22,7 +22,6 @@
     </PropertyGroup>
 
     <Message Importance="High" Text="Attempting to copy DAOMock dll from '$(DaoMockDll)' to '$(OutputPath)'" />
-
     <Copy SourceFiles="$(DaoMockDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('$(DaoMockDll)')" />
   </Target>
 

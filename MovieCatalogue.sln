@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrobelnyKasprzak.MovieCatal
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrobelnyKasprzak.MovieCatalogue.MVC", "GrobelnyKasprzak.MovieCatalogue.MVC\GrobelnyKasprzak.MovieCatalogue.MVC.csproj", "{426A555C-0651-43C5-AF8D-59AA6A4A60F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WPF", "WPF\WPF.csproj", "{BA9C1840-7FEC-406C-880F-58D17E6A07F8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrobelnyKasprzak.MovieCatalogue.WPF", "GrobelnyKasprzak.MovieCatalogue.WPF\GrobelnyKasprzak.MovieCatalogue.WPF.csproj", "{BA9C1840-7FEC-406C-880F-58D17E6A07F8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

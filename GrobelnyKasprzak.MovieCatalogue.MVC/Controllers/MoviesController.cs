@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using GrobelnyKasprzak.MovieCatalogue.Core;
 using GrobelnyKasprzak.MovieCatalogue.MVC.Mappings;
+using GrobelnyKasprzak.MovieCatalogue.MVC.Models.Dto;
 using GrobelnyKasprzak.MovieCatalogue.MVC.ViewModels;
 using GrobelnyKasprzak.MovieCatalogue.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -20,9 +22,33 @@ namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
         }
 
         // GET: MoviesController
-        public ActionResult Index()
+        public ActionResult Index(string? search)
         {
-            return View();
+            var movies = _movieService.GetAllMovies();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim().ToLower();
+
+                movies = [.. movies.Where(m =>
+                    m.Title.Contains(search, StringComparison.CurrentCultureIgnoreCase))];
+            }
+
+            var viewModel = new List<MovieViewModel>();
+
+            foreach (var movie in movies)
+            {
+                var director = _directorService.GetDirectorById(movie.DirectorId);
+
+                viewModel.Add(_mapper.Map<MovieViewModel>(movie, opt =>
+                {
+                    opt.Items[MappingKeys.DirectorName] = director?.Name;
+                }));
+            }
+
+            @ViewData["Search"] = search;
+
+            return View(viewModel);
         }
 
         // GET: MoviesController/Details/5
@@ -44,64 +70,112 @@ namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
         // GET: MoviesController/Create
         public ActionResult Create()
         {
-            return View();
+            var newMovie = _movieService.CreateNewMovie();
+
+            var director = _directorService.GetDirectorById(newMovie.DirectorId);
+            var availableDirectors = _directorService.GetAllDirectors();
+            var availableGenres = Enum.GetValues<MovieGenre>();
+
+            var viewModel = _mapper.Map<MovieViewModel>(newMovie, opt =>
+            {
+                opt.Items[MappingKeys.DirectorName] = director?.Name;
+                opt.Items[MappingKeys.AvailableDirectors] = availableDirectors;
+                opt.Items[MappingKeys.AvailableGenres] = availableGenres;
+            });
+
+            return View(viewModel);
         }
 
         // POST: MoviesController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(MovieViewModel model)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                var directors = _directorService.GetAllDirectors();
+                var genres = Enum.GetValues<MovieGenre>();
+
+                _mapper.Map(model, model, opt =>
+                {
+                    opt.Items[MappingKeys.AvailableDirectors] = directors;
+                    opt.Items[MappingKeys.AvailableGenres] = genres;
+                });
+
+                return View(model);
             }
-            catch
-            {
-                return View();
-            }
+
+            var movie = _mapper.Map<MovieDto>(model);
+            _movieService.AddMovie(movie);
+
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: MoviesController/Edit/5
         public ActionResult Edit(int id)
         {
-            return View();
+            var movie = _movieService.GetMovieById(id);
+            if (movie == null) return NotFound();
+
+            var director = _directorService.GetDirectorById(movie.DirectorId);
+            var availableDirectors = _directorService.GetAllDirectors();
+            var availableGenres = Enum.GetValues<MovieGenre>();
+
+            var viewModel = _mapper.Map<MovieViewModel>(movie, opt =>
+            {
+                opt.Items[MappingKeys.DirectorName] = director?.Name;
+                opt.Items[MappingKeys.AvailableDirectors] = availableDirectors;
+                opt.Items[MappingKeys.AvailableGenres] = availableGenres;
+            });
+
+            return View(viewModel);
         }
 
         // POST: MoviesController/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public ActionResult Edit(int id, MovieViewModel viewModel)
         {
-            try
+            if (id != viewModel.Id) return BadRequest();
+
+            if (!ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                var directors = _directorService.GetAllDirectors();
+                var genres = Enum.GetValues<MovieGenre>();
+
+                _mapper.Map(viewModel, viewModel, opt =>
+                {
+                    opt.Items[MappingKeys.AvailableDirectors] = directors;
+                    opt.Items[MappingKeys.AvailableGenres] = genres;
+                });
+
+                return View(viewModel);
             }
-            catch
-            {
-                return View();
-            }
+
+            var movieToUpdate = _mapper.Map<MovieDto>(viewModel);
+            _movieService.UpdateMovie(movieToUpdate);
+
+            return RedirectToAction(nameof(Details), new { id });
         }
 
-        // GET: MoviesController/Delete/5
+
+        //GET: MoviesController/Delete/5
         public ActionResult Delete(int id)
         {
-            return View();
+            var movie = _movieService.GetMovieById(id);
+            if (movie == null) return NotFound();
+
+            return View(movie);
         }
 
         // POST: MoviesController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult Delete(int id, MovieViewModel model)
         {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            _movieService.DeleteMovie(id);
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

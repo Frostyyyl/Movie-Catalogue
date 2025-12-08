@@ -1,4 +1,7 @@
-﻿using GrobelnyKasprzak.MovieCatalogue.Services;
+﻿using AutoMapper;
+using GrobelnyKasprzak.MovieCatalogue.MVC.Mappings;
+using GrobelnyKasprzak.MovieCatalogue.MVC.ViewModels;
+using GrobelnyKasprzak.MovieCatalogue.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
@@ -6,11 +9,14 @@ namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
     public class DirectorsController : Controller
     {
         private readonly ILogger<DirectorsController> _logger;
-        private readonly DirectorService _service = new();
+        private readonly IMapper _mapper;
+        private readonly DirectorService _directorService = new();
+        private readonly MovieService _movieService = new();
 
-        public DirectorsController(ILogger<DirectorsController> logger)
+        public DirectorsController(ILogger<DirectorsController> logger, IMapper mapper)
         {
             _logger = logger;
+            _mapper = mapper;
         }
 
         // GET: DirectorController
@@ -22,7 +28,17 @@ namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
         // GET: DirectorController/Details/5
         public ActionResult Details(int id)
         {
-            return View(_service.GetDirectorById(id));
+            var director = _directorService.GetDirectorById(id);
+            if (director == null) return NotFound();
+
+            var movies = _movieService.GetMoviesByDirectorId(director.Id);
+
+            var viewModel = _mapper.Map<DirectorViewModel>(director, opt =>
+            {
+                opt.Items[MappingKeys.Movies] = movies;
+            });
+
+            return View(viewModel);
         }
 
         // GET: DirectorController/Create

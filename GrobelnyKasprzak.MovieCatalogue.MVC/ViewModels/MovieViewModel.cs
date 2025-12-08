@@ -1,13 +1,16 @@
 ﻿using GrobelnyKasprzak.MovieCatalogue.Core;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace GrobelnyKasprzak.MovieCatalogue.MVC.ViewModels
+namespace GrobelnyKasprzak.MovieCatalogue.MVC.ViewModels;
+
+public class MovieViewModel
 {
-    public class MovieViewModel
-    {
-        public int Id { get; set; }
-        public required string Title { get; set; }
-        public int Year { get; set; }
-        public MovieGenre Genre { get; set; }
-        public required string Director { get; set; }
-    }
+    public int Id { get; set; }
+    public required string Title { get; set; }
+    public int Year { get; set; }
+    public MovieGenre Genre { get; set; }
+    public int DirectorId { get; set; }
+    public string? Director { get; set; }
+    public ICollection<SelectListItem>? AvailableDirectors { get; set; } = [];
+    public IEnumerable<SelectListItem>? AvailableGenres { get; set; }
 }

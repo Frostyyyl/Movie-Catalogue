@@ -1,0 +1,62 @@
+﻿@model GrobelnyKasprzak.MovieCatalogue.MVC.ViewModels.MovieViewModel
+
+@{
+    ViewData["Title"] = @Model.Title;
+}
+
+<div class="mt-2 p-2">
+
+    <div class="mb-4 px-1 d-flex justify-content-between align-items-center">
+        <h2>Edit @Html.DisplayFor(model => model.Title)</h2>
+        <div>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-primary">Details</a>
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-secondary">Delete</a>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="row px-1">
+        <div class="col-md-4 fw-bold">
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="Id" />
+                <div class="form-group">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+                <div class="form-group mt-2">
+                    <label asp-for="Year" class="form-label"></label>
+                    <input asp-for="Year" class="form-control" />
+                    <span asp-validation-for="Year" class="text-danger"></span>
+                </div>
+                <div class="form-group mt-2">
+                    <label asp-for="Genre" class="form-label"></label>
+                    <select asp-for="Genre" class="form-select"
+                         asp-items="Model.AvailableGenres">
+                    </select>
+                    <span asp-validation-for="Genre" class="text-danger"></span>
+                </div>
+                <div class="form-group mt-2">
+                    <label asp-for="DirectorId" class="form-label">Director</label>
+                    <select asp-for="DirectorId" class="form-select"
+                            asp-items="Model.AvailableDirectors">
+                    </select>
+                    <span asp-validation-for="DirectorId" class="text-danger"></span>
+                </div>
+                <div class="form-group mt-4">
+                    <input type="submit" value="Save" class="btn btn-primary" />
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

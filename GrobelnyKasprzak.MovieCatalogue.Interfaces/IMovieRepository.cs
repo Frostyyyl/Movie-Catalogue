@@ -1,4 +1,6 @@
-﻿namespace GrobelnyKasprzak.MovieCatalogue.Interfaces
+﻿using GrobelnyKasprzak.MovieCatalogue.Core;
+
+namespace GrobelnyKasprzak.MovieCatalogue.Interfaces
 {
     public interface IMovieRepository
     {
@@ -9,5 +11,6 @@
         void Update(IMovie movie);
         void Delete(int id);
         IMovie CreateNew();
+        bool Exists(string? title = null, int? year = null, MovieGenre? genre = null, int? directorId = null);
     }
 }

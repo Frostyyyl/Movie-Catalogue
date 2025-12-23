@@ -12,7 +12,7 @@ public class LookupService : ILookupService
         _genres = Enum.GetValues<MovieGenre>()
             .Select(genre => new SelectListItem
             {
-                Value = genre.ToString(),
+                Value = ((int)genre).ToString(),
                 Text = genre.ToString(),
             })
             .ToList()

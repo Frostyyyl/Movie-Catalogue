@@ -37,8 +37,6 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
 
         public void Add(IMovie movie)
         {
-            ArgumentNullException.ThrowIfNull(movie);
-
             var newMovie = new Movie
             {
                 Id = _nextId++,
@@ -55,25 +53,15 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
 
         public void Update(IMovie movie)
         {
-            ArgumentNullException.ThrowIfNull(movie);
-
             var existing = GetById(movie.Id)
                 ?? throw new KeyNotFoundException($"Movie with ID {movie.Id} not found.");
 
-            var movieToUpdate = new Movie
-            {
-                Title = movie.Title,
-                Year = movie.Year,
-                Genre = movie.Genre,
-                DirectorId = movie.DirectorId
-            };
+            ValidateMovie(movie);
 
-            ValidateMovie(movieToUpdate);
-
-            existing.Title = movieToUpdate.Title;
-            existing.Year = movieToUpdate.Year;
-            existing.Genre = movieToUpdate.Genre;
-            existing.DirectorId = movieToUpdate.DirectorId;
+            existing.Title = movie.Title;
+            existing.Year = movie.Year;
+            existing.Genre = movie.Genre;
+            existing.DirectorId = movie.DirectorId;
         }
 
         public void Delete(int id)
@@ -84,7 +72,17 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
             _movies.Remove((Movie)movie);
         }
 
-        private static void ValidateMovie(Movie movie)
+        public bool Exists(string? title = null, int? year = null, MovieGenre? genre = null, int? directorId = null)
+        {
+            return _movies.Any(m =>
+                (title == null || m.Title == title) &&
+                (year == null || m.Year == year) &&
+                (genre == null || m.Genre == genre) &&
+                (directorId == null || m.DirectorId == directorId)
+            );
+        }
+
+        private static void ValidateMovie(IMovie movie)
         {
             var context = new ValidationContext(movie);
             Validator.ValidateObject(movie, context, validateAllProperties: true);

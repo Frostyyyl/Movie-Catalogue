@@ -1,24 +1,18 @@
 ﻿using AutoMapper;
+using GrobelnyKasprzak.MovieCatalogue.Interfaces;
 using GrobelnyKasprzak.MovieCatalogue.MVC.Models.Dto;
 using GrobelnyKasprzak.MovieCatalogue.MVC.ViewModels;
-using GrobelnyKasprzak.MovieCatalogue.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
 namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
 {
-    public class DirectorsController : Controller
+    public class DirectorsController(ILogger<DirectorsController> logger, IMapper mapper,
+        IDirectorService directorService, IMovieService movieService) : Controller
     {
-        private readonly ILogger<DirectorsController> _logger;
-        private readonly IMapper _mapper;
-        private readonly DirectorService _directorService = new();
-        private readonly MovieService _movieService = new();
-
-        public DirectorsController(ILogger<DirectorsController> logger, IMapper mapper)
-        {
-            _logger = logger;
-            _mapper = mapper;
-        }
+        private readonly ILogger<DirectorsController> _logger = logger;
+        private readonly IMapper _mapper = mapper;
+        private readonly IDirectorService _directorService = directorService;
+        private readonly IMovieService _movieService = movieService;
 
         // GET: DirectorController
         public ActionResult Index(string? search)
@@ -80,7 +74,7 @@ namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
 
                 return RedirectToAction(nameof(Index));
             }
-            catch (ValidationException exception)
+            catch (Exception exception)
             {
                 ModelState.AddModelError(string.Empty, exception.Message);
 
@@ -117,7 +111,7 @@ namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
 
                 return RedirectToAction(nameof(Details), new { id });
             }
-            catch (ValidationException exception)
+            catch (Exception exception)
             {
                 ModelState.AddModelError(string.Empty, exception.Message);
 
@@ -137,11 +131,23 @@ namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
         // POST: DirectorController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult Delete(int id, DirectorViewModel model)
         {
-            _directorService.DeleteDirector(id);
+            try
+            {
+                _directorService.DeleteDirector(id);
 
-            return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception exception)
+            {
+                ModelState.AddModelError("DeleteError", exception.Message);
+
+                var director = _directorService.GetDirectorById(id);
+                if (director == null) return NotFound();
+
+                return View(director);
+            }
         }
 
         private void SetMovies(DirectorViewModel model)

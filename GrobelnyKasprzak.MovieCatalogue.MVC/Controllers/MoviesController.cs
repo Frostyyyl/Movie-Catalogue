@@ -1,28 +1,21 @@
 ﻿using AutoMapper;
+using GrobelnyKasprzak.MovieCatalogue.Interfaces;
 using GrobelnyKasprzak.MovieCatalogue.MVC.Models.Dto;
 using GrobelnyKasprzak.MovieCatalogue.MVC.Services;
 using GrobelnyKasprzak.MovieCatalogue.MVC.ViewModels;
-using GrobelnyKasprzak.MovieCatalogue.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.ComponentModel.DataAnnotations;
 
 namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
 {
-    public class MoviesController : Controller
+    public class MoviesController(ILogger<DirectorsController> logger, IMapper mapper, ILookupService lookupService,
+        IDirectorService directorService, IMovieService movieService) : Controller
     {
-        private readonly ILogger<MoviesController> _logger;
-        private readonly IMapper _mapper;
-        private readonly ILookupService _lookupService;
-        private readonly MovieService _movieService = new();
-        private readonly DirectorService _directorService = new();
-
-        public MoviesController(ILogger<MoviesController> logger, IMapper mapper, ILookupService lookupService)
-        {
-            _logger = logger;
-            _mapper = mapper;
-            _lookupService = lookupService;
-        }
+        private readonly ILogger<DirectorsController> _logger = logger;
+        private readonly IMapper _mapper = mapper;
+        private readonly ILookupService _lookupService = lookupService;
+        private readonly IDirectorService _directorService = directorService;
+        private readonly IMovieService _movieService = movieService;
 
         // GET: MoviesController
         public ActionResult Index(string? search)
@@ -86,7 +79,7 @@ namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
 
                 return RedirectToAction(nameof(Index));
             }
-            catch (ValidationException exception)
+            catch (Exception exception)
             {
                 ModelState.AddModelError(string.Empty, exception.Message);
 
@@ -127,7 +120,7 @@ namespace GrobelnyKasprzak.MovieCatalogue.MVC.Controllers
 
                 return RedirectToAction(nameof(Details), new { id });
             }
-            catch (ValidationException exception)
+            catch (Exception exception)
             {
                 ModelState.AddModelError(string.Empty, exception.Message);
 

@@ -8,21 +8,32 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.0.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GrobelnyKasprzak.MovieCatalogue.Services\GrobelnyKasprzak.MovieCatalogue.Services.csproj" />
   </ItemGroup>
 
-  <!-- Copy DAOMock dll from its project output into this project's output so ReflectionLoader can load it from file -->
-  <Target Name="CopyDaoMockDll" AfterTargets="Build">
+  <!-- Copy DAOMock dll from its project output into this project's output -->
+  <Target Name="CopyDAOMockDll" AfterTargets="Build">
     <PropertyGroup>
-      <DaoMockDll>$(SolutionDir)GrobelnyKasprzak.MovieCatalogue.DAOMock\bin\$(Configuration)\$(TargetFramework)\GrobelnyKasprzak.MovieCatalogue.DAOMock.dll</DaoMockDll>
+      <DAOMockDll>$(SolutionDir)GrobelnyKasprzak.MovieCatalogue.DAOMock\bin\$(Configuration)\$(TargetFramework)\GrobelnyKasprzak.MovieCatalogue.DAOMock.dll</DAOMockDll>
     </PropertyGroup>
 
-    <Message Importance="High" Text="Attempting to copy DAOMock dll from '$(DaoMockDll)' to '$(OutputPath)'" />
-    <Copy SourceFiles="$(DaoMockDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('$(DaoMockDll)')" />
+    <Message Importance="High" Text="Attempting to copy DAOMock dll from '$(DAOMockDll)' to '$(OutputPath)'" />
+    <Copy SourceFiles="$(DAOMockDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('$(DAOMockDll)')" />
+  </Target>
+
+  <!-- Copy DAOSql dll from its project output into this project's output -->
+  <Target Name="CopyDAOSqlDll" AfterTargets="Build">
+	<PropertyGroup>
+		<DAOSqlDll>$(SolutionDir)GrobelnyKasprzak.MovieCatalogue.DAOSql\bin\$(Configuration)\$(TargetFramework)\GrobelnyKasprzak.MovieCatalogue.DAOSql.dll</DAOSqlDll>
+	</PropertyGroup>
+
+	<Message Importance="High" Text="Attempting to copy DAOSql dll from '$(DAOSqlDll)' to '$(OutputPath)'" />
+	<Copy SourceFiles="$(DAOSqlDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('$(DAOSqlDll)')" />
   </Target>
 
 </Project>

@@ -8,10 +8,10 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
     {
         private static readonly List<Director> _directors =
         [
-            new Director { Id = 1, Name = "Lana & Lilly Wachowski" },
-            new Director { Id = 2, Name = "Andrew Adamson" },
-            new Director { Id = 3, Name = "Quentin Tarantino" },
-            new Director { Id = 4, Name = "Christopher Nolan" }
+            new Director { Id = 1, Name = "Lana & Lilly Wachowski", BirthYear = 1988 },
+            new Director { Id = 2, Name = "Andrew Adamson", BirthYear = 1987 },
+            new Director { Id = 3, Name = "Quentin Tarantino", BirthYear = 1991 },
+            new Director { Id = 4, Name = "Christopher Nolan", BirthYear = 1972 }
         ];
 
         private static int _nextId = 5;
@@ -28,17 +28,16 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
 
         public IDirector CreateNew()
         {
-            return new Director();
+            return new Director { BirthYear = DateTime.Now.Year };
         }
 
         public void Add(IDirector director)
         {
-            ArgumentNullException.ThrowIfNull(director);
-
             var newDirector = new Director
             {
                 Id = _nextId++,
-                Name = director.Name
+                Name = director.Name,
+                BirthYear = director.BirthYear
             };
 
             ValidateDirector(newDirector);
@@ -49,19 +48,13 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
 
         public void Update(IDirector director)
         {
-            ArgumentNullException.ThrowIfNull(director);
-
             var existing = GetById(director.Id)
                 ?? throw new KeyNotFoundException($"Director with ID {director.Id} not found.");
 
-            var directorToUpdate = new Director
-            {
-                Name = director.Name
-            };
-
             ValidateDirector(director);
 
-            existing.Name = directorToUpdate.Name;
+            existing.Name = director.Name;
+            existing.BirthYear = director.BirthYear;
         }
 
         public void Delete(int id)
@@ -70,6 +63,14 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
                 ?? throw new KeyNotFoundException($"Director with ID {id} not found.");
 
             _directors.Remove((Director)director);
+        }
+
+        public bool Exists(string? name = null, int? birthYear = null)
+        {
+            return _directors.Any(m =>
+                (name == null || m.Name == name) &&
+                (birthYear == null || m.BirthYear == birthYear)
+            );
         }
 
         private static void ValidateDirector(IDirector director)

@@ -1,14 +1,22 @@
+using GrobelnyKasprzak.MovieCatalogue.Interfaces;
 using GrobelnyKasprzak.MovieCatalogue.MVC.Services;
+using GrobelnyKasprzak.MovieCatalogue.Services;
 
 internal class Program
 {
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        var loader = new ReflectionLoader();
+
+        // Register data access object.
+        loader.Register(builder.Services);
 
         // Add services to the container.
         builder.Services.AddControllersWithViews();
         builder.Services.AddSingleton<ILookupService, LookupService>();
+        builder.Services.AddScoped<IMovieService, MovieService>();
+        builder.Services.AddScoped<IDirectorService, DirectorService>();
         builder.Services.AddAutoMapper(cfg =>
         {
             cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());

@@ -13,8 +13,6 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
             new Director { Id = 4, Name = "Christopher Nolan" }
         ];
 
-        private static int _nextId = 5;
-
         public IEnumerable<IDirector> GetAll()
         {
             return _directors;
@@ -34,7 +32,7 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
         {
             var newDirector = new Director
             {
-                Id = _nextId++,
+                Id = _directors.Any() ? _directors.Max(d => d.Id) + 1 : 1,
                 Name = director.Name
             };
 

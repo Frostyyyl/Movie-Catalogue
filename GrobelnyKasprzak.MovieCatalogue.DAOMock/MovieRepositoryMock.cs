@@ -12,8 +12,6 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
             new Movie { Id = 2, Title = "Shrek", Year = 2001, Genre = MovieGenre.Animation, DirectorId = 2 }
         ];
 
-        private static int _nextId = 3;
-
         public IEnumerable<IMovie> GetAll()
         {
             return _movies;
@@ -45,7 +43,7 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
         {
             var newMovie = new Movie
             {
-                Id = _nextId++,
+                Id = _movies.Any() ? _movies.Max(m => m.Id) + 1 : 1,
                 Title = movie.Title,
                 Year = movie.Year,
                 Genre = movie.Genre,

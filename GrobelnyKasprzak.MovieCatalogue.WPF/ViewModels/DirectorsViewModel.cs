@@ -2,36 +2,36 @@
 using GrobelnyKasprzak.MovieCatalogue.Services;
 using System.Collections.ObjectModel;
 using System.Windows;
-using WPF.Commands;
+using GrobelnyKasprzak.MovieCatalogue.WPF.Commands;
 
-namespace WPF.ViewModels
+namespace GrobelnyKasprzak.MovieCatalogue.WPF.ViewModels
 {
     public class DirectorsViewModel : ViewModel
     {
         private readonly DirectorService _directorService;
         private readonly MovieService _movieService;
 
-        private ObservableCollection<IDirector> _directors;
-        private ObservableCollection<IDirector> _allDirectors;
+        private ObservableCollection<IDirector> _directors = new();
+        private ObservableCollection<IDirector> _allDirectors = new();
+        
         private IDirector? _selectedDirector;
         private string _searchText = string.Empty;
         private string _name = string.Empty;
+        private string _nameError = string.Empty;
 
         public DirectorsViewModel(DirectorService directorService, MovieService movieService)
         {
             _directorService = directorService;
             _movieService = movieService;
-            _directors = new ObservableCollection<IDirector>();
-            _allDirectors = new ObservableCollection<IDirector>();
 
-            AddCommand = new RelayCommand(_ => AddDirector(), _ => !string.IsNullOrWhiteSpace(Name));
-            UpdateCommand = new RelayCommand(_ => UpdateDirector(), _ => SelectedDirector != null && !string.IsNullOrWhiteSpace(Name));
-            DeleteCommand = new RelayCommand(_ => DeleteDirector(), _ => SelectedDirector != null);
-            ClearCommand = new RelayCommand(_ => ClearForm());
+            AddCommand = new RelayCommand(_ => AddDirector(), _ => CanAdd());
+            UpdateCommand = new RelayCommand(_ => UpdateDirector(), _ => CanUpdate());
+            DeleteCommand = new RelayCommand(_ => DeleteDirector(), _ => CanDelete());
 
             LoadDirectors();
         }
 
+        // Properties for data binding
         public ObservableCollection<IDirector> Directors
         {
             get => _directors;
@@ -45,7 +45,11 @@ namespace WPF.ViewModels
             {
                 _selectedDirector = value;
                 OnPropertyChanged();
-                if (value != null) Name = value.Name;
+                
+                if (value != null)
+                    Name = value.Name;
+                else
+                    Name = string.Empty;
             }
         }
 
@@ -56,35 +60,73 @@ namespace WPF.ViewModels
             {
                 _searchText = value;
                 OnPropertyChanged();
-                SearchDirectors();
+                FilterDirectors();
             }
         }
 
         public string Name
         {
             get => _name;
-            set { _name = value; OnPropertyChanged(); }
+            set
+            {
+                _name = value;
+                OnPropertyChanged();
+                ValidateName();
+            }
         }
 
+        // Error properties
+        public string NameError
+        {
+            get => _nameError;
+            set { _nameError = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasNameError)); }
+        }
+
+        public bool HasNameError => !string.IsNullOrEmpty(NameError);
+
+        // Commands
         public RelayCommand AddCommand { get; }
         public RelayCommand UpdateCommand { get; }
         public RelayCommand DeleteCommand { get; }
-        public RelayCommand ClearCommand { get; }
 
+        // Validation
+        private void ValidateName()
+        {
+            NameError = string.IsNullOrWhiteSpace(Name) ? "Name is required" : string.Empty;
+        }
+
+        private bool CanAdd()
+        {
+            return string.IsNullOrEmpty(NameError) && !string.IsNullOrWhiteSpace(Name);
+        }
+
+        private bool CanUpdate()
+        {
+            return SelectedDirector != null && CanAdd();
+        }
+
+        private bool CanDelete()
+        {
+            return SelectedDirector != null;
+        }
+
+        // Data operations
         public void LoadDirectors()
         {
             _allDirectors.Clear();
             foreach (var d in _directorService.GetAllDirectors())
                 _allDirectors.Add(d);
-            SearchDirectors();
+            FilterDirectors();
         }
 
-        private void SearchDirectors()
+        private void FilterDirectors()
         {
             Directors.Clear();
+            
             var filtered = string.IsNullOrWhiteSpace(SearchText)
                 ? _allDirectors
                 : _allDirectors.Where(d => d.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+            
             foreach (var d in filtered)
                 Directors.Add(d);
         }
@@ -93,16 +135,17 @@ namespace WPF.ViewModels
         {
             try
             {
-                var d = _directorService.CreateNewDirector();
-                d.Name = Name;
-                _directorService.AddDirector(d);
+                var director = _directorService.CreateNewDirector();
+                director.Name = Name;
+                _directorService.AddDirector(director);
+                
                 LoadDirectors();
-                ClearForm();
-                MessageBox.Show("Reżyser dodany", "Sukces");
+                SelectedDirector = null;
+                MessageBox.Show("Director added successfully", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Błąd: {ex.Message}", "Błąd");
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -111,15 +154,17 @@ namespace WPF.ViewModels
             try
             {
                 if (SelectedDirector == null) return;
+                
                 SelectedDirector.Name = Name;
                 _directorService.UpdateDirector(SelectedDirector);
+                
                 LoadDirectors();
-                ClearForm();
-                MessageBox.Show("Reżyser zaktualizowany", "Sukces");
+                SelectedDirector = null;
+                MessageBox.Show("Director updated successfully", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Błąd: {ex.Message}", "Błąd");
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -128,30 +173,33 @@ namespace WPF.ViewModels
             try
             {
                 if (SelectedDirector == null) return;
+                
+                // Check if director has movies
                 var hasMovies = _movieService.GetAllMovies().Any(m => m.DirectorId == SelectedDirector.Id);
                 if (hasMovies)
                 {
-                    MessageBox.Show("Nie można usunąć reżysera z filmami.", "Błąd");
+                    MessageBox.Show("Cannot delete director with movies", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
-                if (MessageBox.Show($"Usunąć '{SelectedDirector.Name}'?", "Potwierdzenie", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+
+                var result = MessageBox.Show(
+                    $"Delete '{SelectedDirector.Name}'?",
+                    "Confirm Delete",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
                 {
                     _directorService.DeleteDirector(SelectedDirector.Id);
                     LoadDirectors();
-                    ClearForm();
-                    MessageBox.Show("Reżyser usunięty", "Sukces");
+                    SelectedDirector = null;
+                    MessageBox.Show("Director deleted successfully", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Błąd: {ex.Message}", "Błąd");
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        private void ClearForm()
-        {
-            Name = string.Empty;
-            SelectedDirector = null;
         }
     }
 }

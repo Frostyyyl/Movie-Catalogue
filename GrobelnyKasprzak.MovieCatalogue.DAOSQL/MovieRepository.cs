@@ -21,6 +21,14 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOSql
                 .ToList();
         }
 
+        public IEnumerable<IMovie> GetByDirectorId(int directorId)
+        {
+            return _db.Movies
+                .Include(m => m.Director)
+                .Where(m => m.DirectorId == directorId)
+                .ToList();
+        }
+
         public IMovie? GetById(int id)
         {
             return _db.Movies

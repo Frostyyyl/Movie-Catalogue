@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace WPF
+namespace GrobelnyKasprzak.MovieCatalogue.WPF
 {
     public partial class MainWindow : Window
     {

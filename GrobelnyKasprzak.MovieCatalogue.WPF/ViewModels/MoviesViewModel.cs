@@ -3,45 +3,46 @@ using GrobelnyKasprzak.MovieCatalogue.Interfaces;
 using GrobelnyKasprzak.MovieCatalogue.Services;
 using System.Collections.ObjectModel;
 using System.Windows;
-using WPF.Commands;
+using GrobelnyKasprzak.MovieCatalogue.WPF.Commands;
 
-namespace WPF.ViewModels
+namespace GrobelnyKasprzak.MovieCatalogue.WPF.ViewModels
 {
     public class MoviesViewModel : ViewModel
     {
         private readonly MovieService _movieService;
         private readonly DirectorService _directorService;
 
-        private ObservableCollection<IMovie> _movies;
-        private ObservableCollection<IMovie> _allMovies;
-        private ObservableCollection<IDirector> _directors;
+        // Fields
+        private ObservableCollection<IMovie> _movies = new();
+        private ObservableCollection<IMovie> _allMovies = new();
 
         private IMovie? _selectedMovie;
         private string _searchText = string.Empty;
+        private string _selectedGenreFilter = "All";
 
         private string _title = string.Empty;
-        private int _year = DateTime.Now.Year;
+        private string _yearText = string.Empty;
         private MovieGenre _genre = MovieGenre.Action;
         private IDirector? _selectedDirector;
 
+        private string _titleError = string.Empty;
+        private string _yearError = string.Empty;
+        private string _directorError = string.Empty;
+
+        // Constructor
         public MoviesViewModel(MovieService movieService, DirectorService directorService)
         {
             _movieService = movieService;
             _directorService = directorService;
 
-            _movies = new ObservableCollection<IMovie>();
-            _allMovies = new ObservableCollection<IMovie>();
-            _directors = new ObservableCollection<IDirector>();
-
             AddCommand = new RelayCommand(_ => AddMovie(), _ => CanAddMovie());
             UpdateCommand = new RelayCommand(_ => UpdateMovie(), _ => CanUpdateMovie());
             DeleteCommand = new RelayCommand(_ => DeleteMovie(), _ => CanDeleteMovie());
-            ClearCommand = new RelayCommand(_ => ClearForm());
-            SearchCommand = new RelayCommand(_ => SearchMovies());
 
-            LoadData();
+            LoadMovies();
         }
 
+        // Properties for data binding
         public ObservableCollection<IMovie> Movies
         {
             get => _movies;
@@ -50,8 +51,13 @@ namespace WPF.ViewModels
 
         public ObservableCollection<IDirector> Directors
         {
-            get => _directors;
-            set { _directors = value; OnPropertyChanged(); }
+            get
+            {
+                var directors = new ObservableCollection<IDirector>();
+                foreach (var d in _directorService.GetAllDirectors())
+                    directors.Add(d);
+                return directors;
+            }
         }
 
         public IMovie? SelectedMovie
@@ -61,12 +67,17 @@ namespace WPF.ViewModels
             {
                 _selectedMovie = value;
                 OnPropertyChanged();
+                
                 if (value != null)
                 {
                     Title = value.Title;
-                    Year = value.Year;
+                    YearText = value.Year.ToString();
                     Genre = value.Genre;
                     SelectedDirector = Directors.FirstOrDefault(d => d.Id == value.DirectorId);
+                }
+                else
+                {
+                    ClearForm();
                 }
             }
         }
@@ -78,20 +89,45 @@ namespace WPF.ViewModels
             {
                 _searchText = value;
                 OnPropertyChanged();
-                SearchMovies();
+                FilterMovies();
+            }
+        }
+
+        public string SelectedGenreFilter
+        {
+            get => _selectedGenreFilter;
+            set
+            {
+                _selectedGenreFilter = value;
+                OnPropertyChanged();
+                FilterMovies();
             }
         }
 
         public string Title
         {
             get => _title;
-            set { _title = value; OnPropertyChanged(); }
+            set
+            {
+                _title = value;
+                OnPropertyChanged();
+                ValidateTitle();
+            }
         }
 
-        public int Year
+        public string YearText
         {
-            get => _year;
-            set { _year = value; OnPropertyChanged(); }
+            get => _yearText;
+            set
+            {
+                // Only allow numbers
+                if (string.IsNullOrEmpty(value) || int.TryParse(value, out _))
+                {
+                    _yearText = value;
+                    OnPropertyChanged();
+                    ValidateYear();
+                }
+            }
         }
 
         public MovieGenre Genre
@@ -103,58 +139,131 @@ namespace WPF.ViewModels
         public IDirector? SelectedDirector
         {
             get => _selectedDirector;
-            set { _selectedDirector = value; OnPropertyChanged(); }
+            set
+            {
+                _selectedDirector = value;
+                OnPropertyChanged();
+                ValidateDirector();
+            }
         }
 
+        // Error properties
+        public string TitleError
+        {
+            get => _titleError;
+            set { _titleError = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasTitleError)); }
+        }
+
+        public string YearError
+        {
+            get => _yearError;
+            set { _yearError = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasYearError)); }
+        }
+
+        public string DirectorError
+        {
+            get => _directorError;
+            set { _directorError = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasDirectorError)); }
+        }
+
+        public bool HasTitleError => !string.IsNullOrEmpty(TitleError);
+        public bool HasYearError => !string.IsNullOrEmpty(YearError);
+        public bool HasDirectorError => !string.IsNullOrEmpty(DirectorError);
+
+        // Lists for ComboBoxes
         public Array Genres => Enum.GetValues(typeof(MovieGenre));
 
+        public ObservableCollection<string> GenresWithAll
+        {
+            get
+            {
+                var list = new ObservableCollection<string> { "All" };
+                foreach (var genre in Enum.GetNames(typeof(MovieGenre)))
+                    list.Add(genre);
+                return list;
+            }
+        }
+
+        // Commands
         public RelayCommand AddCommand { get; }
         public RelayCommand UpdateCommand { get; }
         public RelayCommand DeleteCommand { get; }
-        public RelayCommand ClearCommand { get; }
-        public RelayCommand SearchCommand { get; }
 
-        private void LoadData()
+        // Validation methods
+        private void ValidateTitle()
         {
-            LoadDirectors();
-            LoadMovies();
+            TitleError = string.IsNullOrWhiteSpace(Title) ? "Title is required" : string.Empty;
         }
 
+        private void ValidateYear()
+        {
+            if (string.IsNullOrWhiteSpace(YearText))
+            {
+                YearError = "Year is required";
+                return;
+            }
+
+            if (!int.TryParse(YearText, out int year))
+            {
+                YearError = "Invalid year";
+                return;
+            }
+
+            if (year < 1895)
+            {
+                YearError = "Year must be >= 1895";
+                return;
+            }
+
+            if (year > DateTime.Now.Year + 10)
+            {
+                YearError = $"Year must be <= {DateTime.Now.Year + 10}";
+                return;
+            }
+
+            YearError = string.Empty;
+        }
+
+        private void ValidateDirector()
+        {
+            DirectorError = SelectedDirector == null ? "Director is required" : string.Empty;
+        }
+
+        // Data operations
         private void LoadMovies()
         {
             _allMovies.Clear();
-            var movies = _movieService.GetAllMovies();
-            foreach (var movie in movies)
-            {
+            foreach (var movie in _movieService.GetAllMovies())
                 _allMovies.Add(movie);
-            }
-            SearchMovies();
+            FilterMovies();
         }
 
-        private void LoadDirectors()
-        {
-            Directors.Clear();
-            var directors = _directorService.GetAllDirectors();
-            foreach (var director in directors)
-            {
-                Directors.Add(director);
-            }
-        }
-
-        private void SearchMovies()
+        private void FilterMovies()
         {
             Movies.Clear();
-            var filtered = string.IsNullOrWhiteSpace(SearchText)
-                ? _allMovies
-                : _allMovies.Where(m => m.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+            var filtered = _allMovies.AsEnumerable();
+
+            // Filter by search text
+            if (!string.IsNullOrWhiteSpace(SearchText))
+                filtered = filtered.Where(m => m.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+
+            // Filter by genre
+            if (SelectedGenreFilter != "All" && Enum.TryParse<MovieGenre>(SelectedGenreFilter, out var genreFilter))
+                filtered = filtered.Where(m => m.Genre == genreFilter);
 
             foreach (var movie in filtered)
-            {
                 Movies.Add(movie);
-            }
         }
 
-        private bool CanAddMovie() => !string.IsNullOrWhiteSpace(Title) && SelectedDirector != null;
+        private bool CanAddMovie()
+        {
+            return string.IsNullOrEmpty(TitleError) &&
+                   string.IsNullOrEmpty(YearError) &&
+                   string.IsNullOrEmpty(DirectorError) &&
+                   !string.IsNullOrWhiteSpace(Title) &&
+                   !string.IsNullOrWhiteSpace(YearText) &&
+                   SelectedDirector != null;
+        }
 
         private void AddMovie()
         {
@@ -162,22 +271,25 @@ namespace WPF.ViewModels
             {
                 var movie = _movieService.CreateNewMovie();
                 movie.Title = Title;
-                movie.Year = Year;
+                movie.Year = int.Parse(YearText);
                 movie.Genre = Genre;
                 movie.DirectorId = SelectedDirector!.Id;
 
                 _movieService.AddMovie(movie);
                 LoadMovies();
                 ClearForm();
-                MessageBox.Show("Film dodany pomyślnie", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Movie added successfully", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Błąd: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private bool CanUpdateMovie() => SelectedMovie != null && !string.IsNullOrWhiteSpace(Title) && SelectedDirector != null;
+        private bool CanUpdateMovie()
+        {
+            return SelectedMovie != null && CanAddMovie();
+        }
 
         private void UpdateMovie()
         {
@@ -186,18 +298,18 @@ namespace WPF.ViewModels
                 if (SelectedMovie == null) return;
 
                 SelectedMovie.Title = Title;
-                SelectedMovie.Year = Year;
+                SelectedMovie.Year = int.Parse(YearText);
                 SelectedMovie.Genre = Genre;
                 SelectedMovie.DirectorId = SelectedDirector!.Id;
 
                 _movieService.UpdateMovie(SelectedMovie);
                 LoadMovies();
                 ClearForm();
-                MessageBox.Show("Film zaktualizowany pomyślnie", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Movie updated successfully", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Błąd: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -210,8 +322,8 @@ namespace WPF.ViewModels
                 if (SelectedMovie == null) return;
 
                 var result = MessageBox.Show(
-                    $"Czy na pewno usunąć film '{SelectedMovie.Title}'?",
-                    "Potwierdzenie",
+                    $"Delete '{SelectedMovie.Title}'?",
+                    "Confirm Delete",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question);
 
@@ -220,19 +332,19 @@ namespace WPF.ViewModels
                     _movieService.DeleteMovie(SelectedMovie.Id);
                     LoadMovies();
                     ClearForm();
-                    MessageBox.Show("Film usunięty pomyślnie", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("Movie deleted successfully", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Błąd: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private void ClearForm()
         {
             Title = string.Empty;
-            Year = DateTime.Now.Year;
+            YearText = string.Empty;
             Genre = MovieGenre.Action;
             SelectedDirector = null;
             SelectedMovie = null;

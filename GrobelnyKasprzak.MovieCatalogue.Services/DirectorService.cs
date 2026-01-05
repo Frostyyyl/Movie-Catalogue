@@ -2,31 +2,45 @@
 
 namespace GrobelnyKasprzak.MovieCatalogue.Services
 {
-    public class DirectorService
+    public class DirectorService(IDirectorRepository directorRepository, IMovieRepository movieRepository) : IDirectorService
     {
-        private readonly IDirectorRepository _repo;
+        private readonly IDirectorRepository _directorRepository = directorRepository;
+        private readonly IMovieRepository _movieRepository = movieRepository;
 
-        public DirectorService()
+        public IEnumerable<IDirector> GetAllDirectors() => _directorRepository.GetAll();
+
+        public IDirector? GetDirectorById(int id) => _directorRepository.GetById(id);
+
+        public void AddDirector(IDirector director)
         {
-            ReflectionLoader loader = new();
-            _repo = loader.GetRepository<IDirectorRepository>();
+            if (_directorRepository.Exists(name: director.Name, birthYear: director.BirthYear))
+            {
+                throw new InvalidOperationException("This director is already in the system.");
+            }
+
+            _directorRepository.Add(director);
+        }
+        public void UpdateDirector(IDirector director)
+        {
+            if (_directorRepository.Exists(name: director.Name, birthYear: director.BirthYear))
+            {
+                throw new InvalidOperationException("This director is already in the system.");
+            }
+
+            _directorRepository.Update(director);
+        }
+        public void DeleteDirector(int id)
+        {
+            var hasMovies = _movieRepository.GetByDirectorId(id).Any();
+
+            if (hasMovies)
+            {
+                throw new InvalidOperationException("Cannot delete a director who has movies assigned.");
+            }
+
+            _directorRepository.Delete(id);
         }
 
-        public DirectorService(IDirectorRepository repo)
-        {
-            _repo = repo;
-        }
-
-        public IEnumerable<IDirector> GetAllDirectors() => _repo.GetAll();
-
-        public IDirector? GetDirectorById(int id) => _repo.GetById(id);
-
-        public void AddDirector(IDirector director) => _repo.Add(director);
-
-        public void UpdateDirector(IDirector director) => _repo.Update(director);
-
-        public void DeleteDirector(int id) => _repo.Delete(id);
-
-        public IDirector CreateNewDirector() => _repo.CreateNew();
+        public IDirector CreateNewDirector() => _directorRepository.CreateNew();
     }
 }

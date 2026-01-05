@@ -1,5 +1,6 @@
 ﻿using GrobelnyKasprzak.MovieCatalogue.DAOMock.Models;
 using GrobelnyKasprzak.MovieCatalogue.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
 {
@@ -7,10 +8,10 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
     {
         private static readonly List<Director> _directors =
         [
-            new Director { Id = 1, Name = "Lana & Lilly Wachowski" },
-            new Director { Id = 2, Name = "Andrew Adamson" },
-            new Director { Id = 3, Name = "Quentin Tarantino" },
-            new Director { Id = 4, Name = "Christopher Nolan" }
+            new Director { Id = 1, Name = "Lana & Lilly Wachowski", BirthYear = 1988 },
+            new Director { Id = 2, Name = "Andrew Adamson", BirthYear = 1987 },
+            new Director { Id = 3, Name = "Quentin Tarantino", BirthYear = 1991 },
+            new Director { Id = 4, Name = "Christopher Nolan", BirthYear = 1972 }
         ];
 
         public IEnumerable<IDirector> GetAll()
@@ -25,38 +26,55 @@ namespace GrobelnyKasprzak.MovieCatalogue.DAOMock
 
         public IDirector CreateNew()
         {
-            return new Director { Name = "" };
+            return new Director { BirthYear = DateTime.Now.Year };
         }
 
         public void Add(IDirector director)
         {
             var newDirector = new Director
             {
-                Id = _directors.Any() ? _directors.Max(d => d.Id) + 1 : 1,
-                Name = director.Name
+                Id = _nextId++,
+                Name = director.Name,
+                BirthYear = director.BirthYear
             };
+
+            ValidateDirector(newDirector);
 
             _directors.Add(newDirector);
         }
 
+
         public void Update(IDirector director)
         {
-            var existing = GetById(director.Id);
+            var existing = GetById(director.Id)
+                ?? throw new KeyNotFoundException($"Director with ID {director.Id} not found.");
 
-            if (existing != null)
-            {
-                existing.Name = director.Name;
-            }
+            ValidateDirector(director);
+
+            existing.Name = director.Name;
+            existing.BirthYear = director.BirthYear;
         }
 
         public void Delete(int id)
         {
-            var director = GetById(id);
+            var director = GetById(id)
+                ?? throw new KeyNotFoundException($"Director with ID {id} not found.");
 
-            if (director != null)
-            {
-                _directors.Remove((Director)director);
-            }
+            _directors.Remove((Director)director);
+        }
+
+        public bool Exists(string? name = null, int? birthYear = null)
+        {
+            return _directors.Any(m =>
+                (name == null || m.Name == name) &&
+                (birthYear == null || m.BirthYear == birthYear)
+            );
+        }
+
+        private static void ValidateDirector(IDirector director)
+        {
+            var context = new ValidationContext(director);
+            Validator.ValidateObject(director, context, validateAllProperties: true);
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using GrobelnyKasprzak.MovieCatalogue.Interfaces;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
 namespace GrobelnyKasprzak.MovieCatalogue.Services
@@ -34,29 +36,26 @@ namespace GrobelnyKasprzak.MovieCatalogue.Services
             }
         }
 
-        public T GetRepository<T>() where T : class
+        public void Register(IServiceCollection services)
         {
-            Type? typeToCreate = null;
+            var moduleType = _daoAssembly.GetTypes()
+                .FirstOrDefault(t => typeof(IDaoModule).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
 
-            foreach (var t in _daoAssembly.GetTypes())
+            if (moduleType == null)
             {
-                if (typeof(T).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
-                {
-                    typeToCreate = t;
-                    break;
-                }
+                throw new Exception($"Nie znaleziono implementacji {nameof(IDaoModule)} w bibliotece.");
             }
 
-            if (typeToCreate == null)
+            var instance = Activator.CreateInstance(moduleType);
+
+            if (instance is IDaoModule module)
             {
-                throw new Exception($"Nie znaleziono implementacji {typeof(T).Name} w bibliotece.");
+                module.RegisterServices(services);
             }
-
-            var instance = Activator.CreateInstance(typeToCreate);
-
-            return instance == null
-                ? throw new Exception($"Nie udało się utworzyć instancji {typeof(T).Name}.")
-                : (T)instance;
+            else
+            {
+                throw new Exception($"Nie udało się utworzyć instancji {moduleType.Name}.");
+            }
         }
     }
 }

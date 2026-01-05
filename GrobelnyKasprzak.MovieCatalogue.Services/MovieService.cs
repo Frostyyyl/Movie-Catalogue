@@ -2,20 +2,9 @@
 
 namespace GrobelnyKasprzak.MovieCatalogue.Services
 {
-    public class MovieService
+    public class MovieService(IMovieRepository repo) : IMovieService
     {
-        private readonly IMovieRepository _repo;
-
-        public MovieService()
-        {
-            ReflectionLoader loader = new();
-            _repo = loader.GetRepository<IMovieRepository>();
-        }
-
-        public MovieService(IMovieRepository repo)
-        {
-            _repo = repo;
-        }
+        private readonly IMovieRepository _repo = repo;
 
         public IEnumerable<IMovie> GetAllMovies() => _repo.GetAll();
 
@@ -24,9 +13,26 @@ namespace GrobelnyKasprzak.MovieCatalogue.Services
 
         public IMovie? GetMovieById(int id) => _repo.GetById(id);
 
-        public void AddMovie(IMovie movie) => _repo.Add(movie);
+        public void AddMovie(IMovie movie)
+        {
+            if (_repo.Exists(title: movie.Title, year: movie.Year, directorId: movie.DirectorId))
+            {
+                throw new InvalidOperationException($"This movie already exists for this director in the year {movie.Year}.");
+            }
 
-        public void UpdateMovie(IMovie movie) => _repo.Update(movie);
+            _repo.Add(movie);
+        }
+
+        public void UpdateMovie(IMovie movie)
+        {
+            if (_repo.Exists(title: movie.Title, year: movie.Year, directorId: movie.DirectorId))
+            {
+                throw new InvalidOperationException($"This movie already exists for this director in the year {movie.Year}.");
+            }
+
+            _repo.Update(movie);
+
+        }
 
         public void DeleteMovie(int id) => _repo.Delete(id);
 

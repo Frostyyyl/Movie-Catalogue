@@ -20,7 +20,22 @@
         <div class="col-md-4 fw-bold">
             <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
                 @Html.AntiForgeryToken()
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    var modelErrors = ViewData.ModelState.Values.SelectMany(v => v.Errors);
+
+                    if (modelErrors.Any())
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <ul class="mb-0">
+                                @foreach (var error in modelErrors)
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                }
                 <input type="hidden" asp-for="Id" />
                 <div class="form-group">
                     <label asp-for="Title" class="form-label"></label>

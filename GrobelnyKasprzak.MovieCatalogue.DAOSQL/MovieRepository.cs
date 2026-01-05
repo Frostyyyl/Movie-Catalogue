@@ -1,67 +1,89 @@
-﻿using GrobelnyKasprzak.MovieCatalogue.DAOSql.Models;
+﻿using GrobelnyKasprzak.MovieCatalogue.Core;
+using GrobelnyKasprzak.MovieCatalogue.DAOSql.Models;
 using GrobelnyKasprzak.MovieCatalogue.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace GrobelnyKasprzak.MovieCatalogue.DAOSql
 {
-    public class MovieRepository : IMovieRepository
+    public class MovieRepository(MovieCatalogueContext db) : IMovieRepository
     {
-        private readonly MovieCatalogueContext _db;
+        private readonly MovieCatalogueContext _db = db;
 
-        public MovieRepository()
-        {
-            _db = new MovieCatalogueContext();
-            _db.Database.EnsureCreated();
-        }
+        public IEnumerable<IMovie> GetAll() => _db.Movies.ToList();
 
-        public IEnumerable<IMovie> GetAll()
-        {
-            return _db.Movies
-                .Include(m => m.Director)
-                .ToList();
-        }
+        public IEnumerable<IMovie> GetByDirectorId(int directorId) =>
+            _db.Movies.Where(m => m.DirectorId == directorId);
 
-        public IEnumerable<IMovie> GetByDirectorId(int directorId)
-        {
-            return _db.Movies
-                .Include(m => m.Director)
-                .Where(m => m.DirectorId == directorId)
-                .ToList();
-        }
-
-        public IMovie? GetById(int id)
-        {
-            return _db.Movies
-                .Include(m => m.Director)
-                .FirstOrDefault(m => m.Id == id);
-        }
+        public IMovie? GetById(int id) =>
+            _db.Movies.FirstOrDefault(m => m.Id == id);
 
         public void Add(IMovie movie)
         {
-            _db.Movies.Add((Movie)movie);
+            var newMovie = new Movie
+            {
+                Title = movie.Title,
+                Year = movie.Year,
+                Genre = movie.Genre,
+                DirectorId = movie.DirectorId
+            };
+
+            ValidateMovie(newMovie);
+
+            _db.Movies.Add(newMovie);
             _db.SaveChanges();
         }
 
         public void Update(IMovie movie)
         {
-            _db.Movies.Update((Movie)movie);
+            var existing = GetById(movie.Id)
+                ?? throw new KeyNotFoundException($"Movie with ID {movie.Id} not found.");
+
+            ValidateMovie(movie);
+
+            existing.Title = movie.Title;
+            existing.Year = movie.Year;
+            existing.Genre = movie.Genre;
+            existing.DirectorId = movie.DirectorId;
+
             _db.SaveChanges();
         }
 
         public void Delete(int id)
         {
-            var movie = GetById(id);
+            var movie = GetById(id)
+                ?? throw new KeyNotFoundException($"Movie with ID {id} not found.");
 
-            if (movie is Movie concreteMovie)
-            {
-                _db.Movies.Remove(concreteMovie);
-                _db.SaveChanges();
-            }
+            _db.Movies.Remove((Movie)movie);
+            _db.SaveChanges();
         }
 
         public IMovie CreateNew()
         {
-            throw new NotImplementedException();
+            return new Movie { Year = DateTime.Now.Year };
+        }
+
+        private static void ValidateMovie(IMovie movie)
+        {
+            var context = new ValidationContext(movie);
+            Validator.ValidateObject(movie, context, validateAllProperties: true);
+        }
+        public bool Exists(string? title = null, int? year = null, MovieGenre? genre = null, int? directorId = null)
+        {
+            var query = _db.Movies.AsQueryable();
+
+            if (!string.IsNullOrEmpty(title))
+                query = query.Where(m => m.Title == title);
+
+            if (year.HasValue)
+                query = query.Where(m => m.Year == year.Value);
+
+            if (genre.HasValue)
+                query = query.Where(m => m.Genre == genre.Value);
+
+            if (directorId.HasValue)
+                query = query.Where(m => m.DirectorId == directorId.Value);
+
+            return query.Any();
         }
     }
 }

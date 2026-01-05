@@ -23,9 +23,10 @@
     <table class="table">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Movies</th>
-                <th class="text-end"></th>
+                <th style="width: 25%">Name</th>
+                <th style="width: 10%">Year of birth</th>
+                <th style="width: 50%">Movies</th>
+                <th style="width: 15%" class="text-end">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -34,6 +35,9 @@
                 <tr>
                     <td>
                         @Html.DisplayFor(modelItem => item.Name)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.BirthYear)
                     </td>
                     <td>
                         @string.Join(", ", item.Movies.Select(m => m.Title))
